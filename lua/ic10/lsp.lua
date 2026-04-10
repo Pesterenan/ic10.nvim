@@ -1,16 +1,25 @@
-LSP_NAME = "ic10-lsp"
-LSP_VERSION = "0.1.0"
+local LSP_NAME = "ic10-lsp"
+local LSP_VERSION = "0.1.0"
 
 local hover = require("ic10.handlers.hover")
 
 local M = {}
+
+local config = { debug = false }
+
+-- Conditional Log function
+local function log(...)
+  if config.debug then
+    vim.notify(string.format(...), vim.log.levels.INFO)
+  end
+end
 
 ---@param dispatchers table
 local function create_server(dispatchers)
   local closing = false
   return {
     request = function(method, params, callback)
-      print("IC10 LSP - Request:", method)
+      log("IC10 LSP - Request: %s", method)
       if method == "initialize" then
         local result = {
           capabilities = {
@@ -32,11 +41,11 @@ local function create_server(dispatchers)
       end
     end,
     notify = function(method, params)
-      print("IC10 LSP - Notification:", method)
+      log("IC10 LSP - Notification: %s", method)
       if method == "initialized" then
-        print("IC10 LSP - Server Started")
+        log("IC10 LSP - Server Started")
       elseif method == "textDocument/didOpen" then
-        print("IC10 LSP - File Opened:", params.textDocument.uri)
+        log("IC10 LSP - File Opened: %s", params.textDocument.uri)
       elseif method == "exit" then
         closing = true
       end
@@ -46,7 +55,7 @@ local function create_server(dispatchers)
     end,
     terminate = function()
       closing = true
-      print("IC10 LSP - Server terminated.")
+      log("IC10 LSP - Server terminated.")
     end,
   }
 end
@@ -57,7 +66,6 @@ M.client_config = {
   root_dir = vim.fs.dirname(vim.fs.find({ ".git" }, { upward = true })[1]) or vim.fn.getcwd(),
   cmd = create_server,
   on_attach = function(client, bufnr)
-    print(string.format("IC10 LSP - Attached to buffer %d successfully!", bufnr))
     local opts = { noremap = true, silent = true, buffer = bufnr }
     vim.keymap.set("n", "K", vim.lsp.buf.hover, opts)
   end,
@@ -66,5 +74,9 @@ M.client_config = {
     return caps
   end)(),
 }
+
+M.setup = function(opts)
+  config = vim.tbl_deep_extend("force", config, opts or {})
+end
 
 return M
