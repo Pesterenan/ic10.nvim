@@ -1,9 +1,13 @@
 local CATEGORIES = {
+  BATC = "Batch I/O",
   BRAL = "Branch and Link",
   BRAN = "Branch",
   BRRL = "Relative Branching",
+  BITW = "Bitwise",
   COMP = "Comparison",
+  IO = "I/O",
   MATH = "Math",
+  STAC = "Stack",
   TRIG = "Trigonometry",
   UTIL = "Utility",
 }
@@ -185,225 +189,225 @@ M = {
 
   -- Stack
   clr = {
-    category = "Stack",
+    category = CATEGORIES.STAC,
     description = "Clears stack memory for device d?.",
     signature = "clr [d?]",
   },
   clrd = {
-    category = "Stack",
+    category = CATEGORIES.STAC,
     description = "Clears stack memory for device ID.",
     signature = "clrd [id]",
   },
   get = {
-    category = "Stack",
+    category = CATEGORIES.STAC,
     description = "Reads stack value at address from device d?.",
     signature = "get [r?] [d?] [addr]",
   },
   getd = {
-    category = "Stack",
+    category = CATEGORIES.STAC,
     description = "Reads stack value at address from device ID.",
     signature = "getd [r?] [id] [addr]",
   },
   peek = {
-    category = "Stack",
+    category = CATEGORIES.STAC,
     description = "Register = value at top of stack.",
     signature = "peek [r?]",
   },
   poke = {
-    category = "Stack",
+    category = CATEGORIES.STAC,
     description = "Stores value at address in the stack.",
     signature = "poke [addr] [value]",
   },
   pop = {
-    category = "Stack",
+    category = CATEGORIES.STAC,
     description = "Register = top of stack; decrements sp.",
     signature = "pop [r?]",
   },
   push = {
-    category = "Stack",
+    category = CATEGORIES.STAC,
     description = "Pushes value to stack; increments sp.",
     signature = "push [value]",
   },
   put = {
-    category = "Stack",
+    category = CATEGORIES.STAC,
     description = "Writes value to stack at address on device d?.",
     signature = "put [d?] [addr] [value]",
   },
   putd = {
-    category = "Stack",
+    category = CATEGORIES.STAC,
     description = "Writes value to stack at address on device ID.",
     signature = "putd [id] [addr] [value]",
   },
 
   -- I/O & Logic
   l = {
-    category = "I/O",
+    category = CATEGORIES.IO,
     description = "Loads logicType from device d? to r?.",
     signature = "l [r?] [d?] [logicType]",
   },
   lr = {
-    category = "I/O",
+    category = CATEGORIES.IO,
     description = "Loads reagent data from device.",
     signature = "lr [r?] [d?] [reagentMode] [int]",
   },
   ls = {
-    category = "I/O",
+    category = CATEGORIES.IO,
     description = "Loads logicSlotType from slotIndex on d?.",
     signature = "ls [r?] [d?] [slotIndex] [logicSlotType]",
   },
   s = {
-    category = "I/O",
+    category = CATEGORIES.IO,
     description = "Stores register r? to logicType on device d?.",
     signature = "s [d?] [logicType] [r?]",
   },
   ss = {
-    category = "I/O",
+    category = CATEGORIES.IO,
     description = "Stores r? to slotIndex logicSlotType on d?.",
     signature = "ss [d?] [slotIndex] [logicSlotType] [r?]",
   },
   rmap = {
-    category = "I/O",
+    category = CATEGORIES.IO,
     description = "Maps reagent hash to prefab hash for device.",
     signature = "rmap [r?] [d?] [reagentHash]",
   },
 
   -- Batched I/O
   lb = {
-    category = "Batch",
+    category = CATEGORIES.BATC,
     description = "Loads logicType from all devices of deviceHash.",
     signature = "lb [r?] [deviceHash] [logicType] [mode]",
   },
   lbn = {
-    category = "Batch",
+    category = CATEGORIES.BATC,
     description = "Batch load filtered by type and name.",
     signature = "lbn [r?] [deviceHash] [nameHash] [logicType] [mode]",
   },
   lbns = {
-    category = "Batch",
+    category = CATEGORIES.BATC,
     description = "Batch load from slot filtered by type and name.",
     signature = "lbns [r?] [deviceHash] [nameHash] [slot] [logicType] [mode]",
   },
   lbs = {
-    category = "Batch",
+    category = CATEGORIES.BATC,
     description = "Batch load from slot filtered by type.",
     signature = "lbs [r?] [deviceHash] [slot] [logicType] [mode]",
   },
   sb = {
-    category = "Batch",
+    category = CATEGORIES.BATC,
     description = "Stores r? to logicType on all devices of deviceHash.",
     signature = "sb [deviceHash] [logicType] [r?]",
   },
   sbn = {
-    category = "Batch",
+    category = CATEGORIES.BATC,
     description = "Batch store filtered by type and name.",
     signature = "sbn [deviceHash] [nameHash] [logicType] [r?]",
   },
   sbs = {
-    category = "Batch",
+    category = CATEGORIES.BATC,
     description = "Batch store to slot on devices of deviceHash.",
     signature = "sbs [deviceHash] [slot] [logicType] [r?]",
   },
 
   -- Bitwise
   ["and"] = {
-    category = "Bitwise",
+    category = CATEGORIES.BITW,
     description = "Bitwise logical AND.",
     signature = "and [r?] [a] [b]",
   },
   nor = {
-    category = "Bitwise",
+    category = CATEGORIES.BITW,
     description = "Bitwise logical NOR.",
     signature = "nor [r?] [a] [b]",
   },
   ["not"] = {
-    category = "Bitwise",
+    category = CATEGORIES.BITW,
     description = "Bitwise logical NOT.",
     signature = "not [r?] [a]",
   },
   ["or"] = {
-    category = "Bitwise",
+    category = CATEGORIES.BITW,
     description = "Bitwise logical OR.",
     signature = "or [r?] [a] [b]",
   },
   sla = {
-    category = "Bitwise",
+    category = CATEGORIES.BITW,
     description = "Bitwise left shift (arithmetic).",
     signature = "sla [r?] [a] [b]",
   },
   sll = {
-    category = "Bitwise",
+    category = CATEGORIES.BITW,
     description = "Bitwise left shift (logical).",
     signature = "sll [r?] [a] [b]",
   },
   sra = {
-    category = "Bitwise",
+    category = CATEGORIES.BITW,
     description = "Bitwise right shift (arithmetic).",
     signature = "sra [r?] [a] [b]",
   },
   srl = {
-    category = "Bitwise",
+    category = CATEGORIES.BITW,
     description = "Bitwise right shift (logical).",
     signature = "srl [r?] [a] [b]",
   },
   xor = {
-    category = "Bitwise",
+    category = CATEGORIES.BITW,
     description = "Bitwise logical XOR.",
     signature = "xor [r?] [a] [b]",
   },
   ext = {
-    category = "Bitwise",
+    category = CATEGORIES.BITW,
     description = "Extracts bit field from source.",
     signature = "ext [r?] [source] [offset] [length]",
   },
   ins = {
-    category = "Bitwise",
+    category = CATEGORIES.BITW,
     description = "Inserts bit field into register.",
     signature = "ins [r?] [field] [offset] [length]",
   },
 
   -- Comparison
   select = {
-    category = "Comparison",
+    category = CATEGORIES.COMP,
     description = "r? = b if a != 0, else c.",
     signature = "select [r?] [a] [b] [c]",
   },
   seq = {
-    category = "Comparison",
+    category = CATEGORIES.COMP,
     description = "r? = 1 if a == b, else 0.",
     signature = "seq [r?] [a] [b]",
   },
   sne = {
-    category = "Comparison",
+    category = CATEGORIES.COMP,
     description = "r? = 1 if a != b, else 0.",
     signature = "sne [r?] [a] [b]",
   },
   sge = {
-    category = "Comparison",
+    category = CATEGORIES.COMP,
     description = "r? = 1 if a >= b, else 0.",
     signature = "sge [r?] [a] [b]",
   },
   sgt = {
-    category = "Comparison",
+    category = CATEGORIES.COMP,
     description = "r? = 1 if a > b, else 0.",
     signature = "sgt [r?] [a] [b]",
   },
   sle = {
-    category = "Comparison",
+    category = CATEGORIES.COMP,
     description = "r? = 1 if a <= b, else 0.",
     signature = "sle [r?] [a] [b]",
   },
   slt = {
-    category = "Comparison",
+    category = CATEGORIES.COMP,
     description = "r? = 1 if a < b, else 0.",
     signature = "slt [r?] [a] [b]",
   },
   sap = {
-    category = "Comparison",
+    category = CATEGORIES.COMP,
     description = "r? = 1 if a approx equal to b.",
     signature = "sap [r?] [a] [b] [c]",
   },
   sapz = {
-    category = "Comparison",
+    category = CATEGORIES.COMP,
     description = "r? = 1 if a approx zero.",
     signature = "sapz [r?] [a] [b]",
   },
