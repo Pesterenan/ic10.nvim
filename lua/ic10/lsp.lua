@@ -32,7 +32,7 @@ local function create_server(dispatchers)
         }
         callback(nil, result)
       elseif method == "textDocument/hover" then
-        callback(nil, hover.on_hover(params))
+        hover.on_hover(params, callback)
       elseif method == "shutdown" then
         callback(nil, nil)
         closing = true
