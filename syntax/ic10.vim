@@ -11,7 +11,7 @@ endif
 syn match ic10Comment "#\ .*$"
 
 " Numbers
-syn match ic10Number "\v\d+(\.\d+)?"
+syn match ic10Number "\v-?\d+(\.\d+)?"
 syn match ic10Number "\v0x[0-9a-fA-F]+"
 
 " Operators
@@ -46,12 +46,13 @@ syn match ic10Device "\(d[0-5]\|db\)"
 syn match ic10Label "^[a-zA-Z][a-zA-Z0-9]*:"
 
 " Highlight Linking
+hi ic10Device guifg=LightGreen
+hi ic10Register guifg=Salmon
+hi Label guifg=Violet
 hi def link ic10Comment Comment
-hi def link ic10Device Identifier
 hi def link ic10Instruction Function
 hi def link ic10Label Label
 hi def link ic10Number Constant
-hi def link ic10Register Identifier
 hi def link ic10SysKeyword Keyword
 
 let b:current_syntax = "ic10"
