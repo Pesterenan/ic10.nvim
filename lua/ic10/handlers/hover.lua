@@ -1,41 +1,54 @@
 local M = {}
 
-local function get_word_at_params(params)
-  local bufnr = vim.uri_to_bufnr(params.textDocument.uri)
-  if not vim.api.nvim_buf_is_loaded(bufnr) then
-    return ""
+local function format_hover_content(word, data)
+  local lines = {
+    "**" .. word .. "** (" .. (data.category or "unknown") .. ") - IC10",
+    "---",
+  }
+  if data.signature then
+    table.insert(lines, "Signature: `" .. data.signature .. "`")
   end
-  local line_idx = params.position.line
-  local col = tonumber(params.position.character) or 0
-  local line = vim.api.nvim_buf_get_lines(bufnr, line_idx, line_idx + 1, false)[1] or ""
-
-  for s, w, e in line:gmatch("()([%w_.:$]+)()") do
-    if (s - 1) <= col and col <= (e - 1) then
-      return w:gsub(":$", "") -- Remove ':' se for um label
-    end
+  if data.value ~= nil then
+    table.insert(lines, "Value: " .. tostring(data.value))
   end
-  return ""
+  if data.description then
+    table.insert(lines, "")
+    table.insert(lines, data.description)
+  end
+  if data.example then
+    table.insert(lines, "")
+    table.insert(lines, "Example: " .. data.example)
+  end
+  return { kind = "markdown", value = table.concat(lines, "\n") }
 end
 
 M.on_hover = function(params, callback)
-  local word = get_word_at_params(params)
+  local word = require("ic10.utils.buffer").get_word_at_params(params)
   if word == "" then
     return callback(nil, nil)
   end
 
-  local operators = require("ic10.constants.operators")
-  local data = operators[word]
-  if data then
-    local content = {
-      "**" .. word .. "** (" .. data.category .. ") - IC10",
-      "---",
-      "Signature: `" .. data.signature .. "`",
-      "",
-      data.description,
-      (data.example and ("Example: " .. data.example) or ""),
-    }
-    callback(nil, { contents = { kind = "markdown", value = table.concat(content, "\n") } })
+  local constants = require("ic10.constants")
+  local operators = constants.operators
+  local types = constants.types
+
+  local sources = {
+    operators,
+    types.logic_types,
+    types.logic_slot_types,
+    types.system,
+    types.batch_modes,
+    types.reagent_modes,
+  }
+
+  for _, source in ipairs(sources) do
+    local data = source[word]
+    if data then
+      local contents = format_hover_content(word, data)
+      return callback(nil, { contents = contents })
+    end
   end
+  callback(nil, nil)
 end
 
 return M
