@@ -1,55 +1,26 @@
 " Vim syntax file
 " Language: Stationeers IC10 assembly
 " Maintainer: Renan Torres
-" Latest Revision: 09 April 2026
+" Latest Revision: 13 April 2026
 
 if exists("b:current_syntax")
   finish
 endif
 
-" Comments
-syn match ic10Comment "#\ .*$"
+syn match ic10Comment    "#\ .*$"
 
-" Numbers
-syn match ic10Number "\v-?\d+(\.\d+)?"
-syn match ic10Number "\v0x[0-9a-fA-F]+"
+" Grupos Atômicos (ordem define prioridade)
+" Ordem: específicos primeiro, genérico por último
 
-" Operators
-" System Keywords
-syn keyword ic10SysKeyword alias define hcf sleep yield j jal jr
-" Mathematical
-syn keyword ic10Instruction abs add ceil div pow exp floor log max min mod move mul rand round sqrt sub trunc lerp
-" Trigonometry
-syn keyword ic10Instruction acos asin atan atan2 cos sin tan
-" Stack
-syn keyword ic10Instruction clr clrd get getd peek poke pop push put putd
-" I/O
-syn keyword ic10Instruction l lr ls s ss rmap lb lbn lbns lbs sb sbn sbs
-" Bitwise
-syn keyword ic10Instruction and nor not or sla sll sra srl xor ext ins
-" Comparison
-syn keyword ic10Instruction select seq sne sge sgt sle slt sap sapz
-" Branching
-syn keyword ic10Instruction beq bne bgt blt bge ble beqz bnez bgez blez bgtz bltz
-" Relative Branching
-syn keyword ic10Instruction breq brne brgt brlt brge brle breqz brnez brgez brlez brgtz brltz
-" Branch and Link
-syn keyword ic10Instruction beqal bneal bgtal bltal bgeal bleal beqzal bnezal bgezal blezal bgtzal bltzal
-
-" Registers
-syn match ic10Register "\<r\([0-9]\|1[0-5]\)\>"
-
-" Devices
-syn match ic10Device "\(d[0-5]\|db\)"
-
-" Labels
-syn match ic10Label "^[a-zA-Z][a-zA-Z0-9]*:"
+" Genérico
+syn match ic10AnyArg        contained /[^[:space:]]\+/
+syn match ic10LabelArg      contained "\<[a-zA-Z][a-zA-Z0-9.]*\>"
 
 " Constants
 " System
-syn keyword ic10ConstSystem MaxInstructionCount MaxRegisterCount StackSize
+syn match ic10ConstSystem contained "\v<(MaxInstructionCount|MaxRegisterCount|StackSize)>"
 " Batch Mode
-syn keyword ic10ConstBatch Average Sum Minimum Maximum
+syn match ic10ConstBatch     contained "\v<(Average|Sum|Minimum|Maximum)>"
 " Reagent Mode
 syn keyword ic10ConstReagent Contents Required Recipe
 " Logic Types
@@ -91,20 +62,142 @@ syn keyword ic10ConstSlotTypes HarvestedHash Health LineNumber Lock Mature Matur
 syn keyword ic10ConstSlotTypes OccupantHash Occupied On Open PrefabHash Pressure PressureAir PressureWaste
 syn keyword ic10ConstSlotTypes Quantity ReferenceId Seeding SeedingRatio SortingClass Temperature TotalSlots Volume
 
-" Highlight Linking
-hi ic10Number guifg=#24A09A
-hi Constant guifg=#EC7609
-hi ic10Device guifg=#00FD00
-hi ic10Register guifg=#0067CF
-hi ic10Label guifg=#841DC7
-hi Keyword guifg=#E3D119
-hi def link ic10Comment Comment
-hi def link ic10ConstLogicTypes Constant
-hi def link ic10ConstSlotTypes Constant
-hi def link ic10ConstBatch Constant
-hi def link ic10ConstReagent Constant
-hi def link ic10ConstSystem Constant
-hi def link ic10Instruction Function
-hi def link ic10SysKeyword Keyword
+syn match ic10LabelDef   "^\s*[a-zA-Z][a-zA-Z0-9.]*:"
+syn match ic10RegisterArg   contained "\v<r([0-9]|1[0-5]|a)>|<sp>"
+syn match ic10DeviceArg     contained "\v<(d[0-5]|db)>"
+syn match ic10NumberArg     contained "\v-?\d+(\.\d+)?"
+syn match ic10NumberArg     contained "\v0x[0-9a-fA-F]+"
+
+" Operators
+
+" Branch
+syn match ic10BLine "^\s*\<\(beq\|bne\|bge\|ble\|bgt\|blt\)\>\s\+[^[:space:]]\+\s\+[^[:space:]]\+\s\+[^[:space:]]\+" contains=ic10BInstr,ic10NumberArg,ic10RegisterArg,ic10LabelArg,
+syn keyword ic10BInstr contained beq bne bge ble bgt blt
+hi def link ic10BInstr Function
+
+" Branch Zero
+syn match ic10BZLine "^\s*\<\(beqz\|bnez\|bgez\|blez\|bgtz\|bltz\)\>\s\+[^[:space:]]\+\s\+[^[:space:]]\+" contains=ic10BZInstr,ic10NumberArg,ic10RegisterArg,ic10LabelArg,
+syn keyword ic10BZInstr contained beqz bnez bgez blez bgtz bltz
+hi def link ic10BZInstr Function
+
+" Branch and Link
+syn match ic10BALLine "^\s*\<\(beqal\|bneal\|bgeal\|bleal\|bgtal\|bltal\)\>\s\+[^[:space:]]\+\s\+[^[:space:]]\+\s\+[^[:space:]]\+" contains=ic10BALInstr,ic10NumberArg,ic10RegisterArg,ic10LabelArg,
+syn keyword ic10BALInstr contained beqal bneal bgeal bleal bgtal bltal
+hi def link ic10BALInstr Function
+
+" Branch Zero and Link
+syn match ic10BZALLine "^\s*\<\(beqzal\|bnezal\|bgezal\|blezal\|bgtzal\|bltzal\)\>\s\+[^[:space:]]\+\s\+[^[:space:]]\+" contains=ic10BZALInstr,ic10NumberArg,ic10RegisterArg,ic10LabelArg,
+syn keyword ic10BZALInstr contained beqzal bnezal bgezal blezal bgtzal bltzal
+hi def link ic10BZALInstr Function
+
+" Branch Relative
+syn match ic10BRLine "^\s*\<\(breq\|brne\|brge\|brle\|brgt\|brlt\)\>\s\+[^[:space:]]\+\s\+[^[:space:]]\+\s\+[^[:space:]]\+" contains=ic10BRInstr,ic10NumberArg,ic10RegisterArg,ic10LabelArg,
+syn keyword ic10BRInstr contained breq brne brge brle brgt brlt
+hi def link ic10BRInstr Function
+
+" Branch Relative Zero
+syn match ic10BRZLine "^\s*\<\(breqz\|brnez\|brgez\|brlez\|brgtz\|brltz\)\>\s\+[^[:space:]]\+\s\+[^[:space:]]\+" contains=ic10BRZInstr,ic10NumberArg,ic10RegisterArg,ic10ConstLogicTypes,ic10LabelArg,
+syn keyword ic10BRZInstr contained breqz brnez brgez brlez brgtz brltz
+hi def link ic10BRZInstr Function
+
+" Jump
+syn match ic10JumpLine "^\s*\<j\(r\|al\)\?\>\s\+[^[:space:]]\+" contains=ic10JumpInstr,ic10RegisterArg,ic10NumberArg,ic10LabelArg
+syn keyword ic10JumpInstr contained j jr jal
+hi def link ic10JumpInstr Keyword
+
+" Alias|Define
+syn match ic10AliasDefineLine "^\s*\<\(alias\|define\)\>\s\+[^[:space:]]\+\s\+[^[:space:]]\+" contains=ic10AliasDefineInstr,ic10RegisterArg,ic10DeviceArg,ic10NumberArg
+syn keyword ic10AliasDefineInstr contained alias define
+hi def link ic10AliasDefineInstr Keyword
+
+" No Argument Instructions
+syn keyword ic10NoArgInstr hcf yield
+hi def link ic10NoArgInstr Keyword
+
+" One Argument Instructions
+syn match ic10OneArgLine "^\s*\<\(sleep\|rand\|clrd\?\|p\(eek\|op\|ush\)\)\>\s\+[^[:space:]]\+" contains=ic10OneArgInstr,ic10RegisterArg,ic10NumberArg
+syn keyword ic10OneArgInstr contained sleep rand clr clrd peek pop push
+hi def link ic10OneArgInstr Keyword
+
+" Two Argument Math Instructions
+syn match ic10TwoArgMathLine "^\s*\<\(abs\|ceil\|exp\|floor\|log\|move\|round\|sqrt\|trunc\|acos\|asin\|atan\|cos\|sin\|tan\)\>\s\+[^[:space:]]\+\s\+[^[:space:]]\+" contains=ic10TwoArgMathInstr,ic10RegisterArg,ic10NumberArg
+syn keyword ic10TwoArgMathInstr contained abs ceil exp floor log move round sqrt trunc acos asin atan cos sin tan
+hi def link ic10TwoArgMathInstr Keyword
+
+" Three Argument Math Instructions
+syn match ic10ThreeArgMathLine "^\s*\<\(add\|div\|pow\|max\|min\|mod\|mul\|sub\|atan2\)\>\s\+[^[:space:]]\+\s\+[^[:space:]]\+\s\+[^[:space:]]\+" contains=ic10ThreeArgMathInstr,ic10RegisterArg,ic10NumberArg
+syn keyword ic10ThreeArgMathInstr contained add div pow max min mod mul sub atan2
+hi def link ic10ThreeArgMathInstr Keyword
+
+" Four Argument Math Instructions
+syn match ic10FourArgMathLine "^\s*\<lerp\>\s\+[^[:space:]]\+\s\+[^[:space:]]\+\s\+[^[:space:]]\+\s\+[^[:space:]]\+" contains=ic10FourArgMathInstr,ic10RegisterArg,ic10NumberArg
+syn keyword ic10FourArgMathInstr contained lerp
+hi def link ic10FourArgMathInstr Keyword
+
+" Stack Device Instructions
+syn match ic10StackDeviceLine "^\s*\<\(get\|poke\|put\)\>\s\+[^[:space:]]\+\s\+[^[:space:]]\+\s\+[^[:space:]]\+" contains=ic10StackDeviceInstr,ic10DeviceArg,ic10RegisterArg,ic10NumberArg
+syn keyword ic10StackDeviceInstr contained get poke put
+hi def link ic10StackDeviceInstr Keyword
+
+" Stack ID Instructions
+syn match ic10StackIDLine "^\s*\<\(getd\|\|putd\)\>\s\+[^[:space:]]\+\s\+[^[:space:]]\+\s\+[^[:space:]]\+" contains=ic10StackIDInstr,ic10RegisterArg,ic10NumberArg,ic10LabelArg
+syn keyword ic10StackIDInstr contained getd putd
+hi def link ic10StackIDInstr Keyword
+
+
+
+    "signature = "and [r?] [a] [b]",
+    "signature = "nor [r?] [a] [b]",
+    "signature = "not [r?] [a]",
+    "signature = "or [r?] [a] [b]",
+    "signature = "xor [r?] [a] [b]",
+    "signature = "ext [r?] [source] [offset] [length]",
+    "signature = "ins [r?] [field] [offset] [length]",
+    "
+    "
+    "signature = "select [r?] [a] [b] [c]",
+    "signature = "seq [r?] [a] [b]",
+    "signature = "sge [r?] [a] [b]",
+    "signature = "sgt [r?] [a] [b]",
+    "signature = "sla [r?] [a] [b]",
+    "signature = "sle [r?] [a] [b]",
+    "signature = "sll [r?] [a] [b]",
+    "signature = "slt [r?] [a] [b]",
+    "signature = "sne [r?] [a] [b]",
+    "signature = "sra [r?] [a] [b]",
+    "signature = "srl [r?] [a] [b]",
+    "signature = "sapz [r?] [a] [b]",
+    "signature = "sap [r?] [a] [b] [c]",
+    "
+    "
+    "signature = "l [r?] [d?] [logicType]",
+    "signature = "lr [r?] [d?] [reagentMode] [int]",
+    "signature = "ls [r?] [d?] [slotIndex] [logicSlotType]",
+    "signature = "lb [r?] [deviceHash] [logicType] [mode]",
+    "signature = "lbn [r?] [deviceHash] [nameHash] [logicType] [mode]",
+    "signature = "lbns [r?] [deviceHash] [nameHash] [slot] [logicType] [mode]",
+    "signature = "lbs [r?] [deviceHash] [slot] [logicType] [mode]",
+    "signature = "sb [deviceHash] [logicType] [r?]",
+    "signature = "sbn [deviceHash] [nameHash] [logicType] [r?]",
+    "signature = "sbs [deviceHash] [slot] [logicType] [r?]",
+    "signature = "s [d?] [logicType] [r?]",
+    "signature = "ss [d?] [slotIndex] [logicSlotType] [r?]",
+    "
+    "
+    "signature = "rmap [r?] [d?] [reagentHash]",
+
+" ========== HIGHLIGHT LINKS FINAIS ==========
+hi def link ic10Comment      Comment
+hi def link ic10NumberArg    Number
+hi def link ic10RegisterArg  Type
+hi def link ic10DeviceArg    Special
+hi def link ic10LabelDef     Label
+
+" Cores personalizadas (opcional, ajuste ao seu gosto)
+hi ic10NumberArg     guifg=#24A09A
+hi ic10RegisterArg   guifg=#0067CF
+hi ic10DeviceArg     guifg=#00FD00
+hi ic10LabelDef   guifg=#841DC7
+hi ic10LabelArg   guifg=Violet
 
 let b:current_syntax = "ic10"
