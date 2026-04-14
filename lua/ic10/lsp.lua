@@ -73,6 +73,12 @@ M.client_config = {
     local opts = { noremap = true, silent = true, buffer = bufnr }
     vim.keymap.set("n", "K", vim.lsp.buf.hover, opts)
     vim.keymap.set("n", "gd", vim.lsp.buf.definition, opts)
+    vim.api.nvim_create_autocmd("BufDelete", {
+      buffer = bufnr,
+      callback = function ()
+        require("ic10.utils.symbols").clear_cache(bufnr)
+      end,
+    })
   end,
   capabilities = (function()
     local caps = vim.lsp.protocol.make_client_capabilities()
