@@ -31,4 +31,20 @@ M.get_word_at_params = function(params)
   return ""
 end
 
+--- Scans the actual buffer and returns the line where the label is defined.
+---@param bufnr number
+---@param label_name string
+---@return number|nil line The line (0-indexed) where the label is defined or nil if not found.
+M.find_label_definition = function (bufnr, label_name)
+  local lines = vim.api.nvim_buf_get_lines(bufnr, 0 , -1, false)
+  local pattern = "^%s*"..vim.pesc(label_name).."%s*:"
+  for i, line in ipairs(lines) do
+    if line:match(pattern) then
+      return i - 1
+    end
+  end
+
+  return nil
+end
+
 return M

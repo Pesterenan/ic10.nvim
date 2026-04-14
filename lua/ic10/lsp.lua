@@ -2,6 +2,7 @@ local LSP_NAME = "ic10-lsp"
 local LSP_VERSION = "0.1.0"
 
 local hover = require("ic10.handlers.hover")
+local definition = require("ic10.handlers.definition")
 
 local M = {}
 
@@ -23,6 +24,7 @@ local function create_server(dispatchers)
       if method == "initialize" then
         local result = {
           capabilities = {
+            definitionProvider = true,
             hoverProvider = true,
           },
           serverInfo = {
@@ -33,6 +35,8 @@ local function create_server(dispatchers)
         callback(nil, result)
       elseif method == "textDocument/hover" then
         hover.on_hover(params, callback)
+      elseif method == "textDocument/definition" then
+        definition.on_definition(params, callback)
       elseif method == "shutdown" then
         callback(nil, nil)
         closing = true
@@ -68,6 +72,7 @@ M.client_config = {
   on_attach = function(client, bufnr)
     local opts = { noremap = true, silent = true, buffer = bufnr }
     vim.keymap.set("n", "K", vim.lsp.buf.hover, opts)
+    vim.keymap.set("n", "gd", vim.lsp.buf.definition, opts)
   end,
   capabilities = (function()
     local caps = vim.lsp.protocol.make_client_capabilities()
