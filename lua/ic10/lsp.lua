@@ -26,6 +26,7 @@ local function create_server(dispatchers)
           capabilities = {
             definitionProvider = true,
             hoverProvider = true,
+            textDocumentSync = 1,
           },
           serverInfo = {
             name = LSP_NAME,
@@ -37,6 +38,10 @@ local function create_server(dispatchers)
         hover.on_hover(params, callback)
       elseif method == "textDocument/definition" then
         definition.on_definition(params, callback)
+      elseif method == "textDocument/didChange" then
+        local bufnr = vim.uri_to_bufnr(params.textDocument.uri)
+        require("ic10.utils.symbols").clear_cache(bufnr)
+        callback(nil, nil)
       elseif method == "shutdown" then
         callback(nil, nil)
         closing = true
