@@ -1,29 +1,26 @@
 local LSP_NAME = "ic10-lsp"
 local LSP_VERSION = "0.1.0"
 
-local hover = require("ic10.handlers.hover")
+local buffer_utils = require("ic10.utils.buffer")
+local completion = require("ic10.handlers.completion")
 local definition = require("ic10.handlers.definition")
+local hover = require("ic10.handlers.hover")
 
 local M = {}
-
-local config = { debug = false }
-
--- Conditional Log function
-local function log(...)
-  if config.debug then
-    vim.notify(string.format(...), vim.log.levels.INFO)
-  end
-end
 
 ---@param dispatchers table
 local function create_server(dispatchers)
   local closing = false
   return {
     request = function(method, params, callback)
-      log("IC10 LSP - Request: %s", method)
+      -- buffer_utils.log("Request: %s", method)
       if method == "initialize" then
         local result = {
           capabilities = {
+            completionProvider = {
+              triggerCharacters = { " ", "\t" },
+              resolveProvider = false,
+            },
             definitionProvider = true,
             hoverProvider = true,
             textDocumentSync = 1,
@@ -34,6 +31,8 @@ local function create_server(dispatchers)
           },
         }
         callback(nil, result)
+      elseif method == "textDocument/completion" then
+        completion.on_completion(params, callback)
       elseif method == "textDocument/hover" then
         hover.on_hover(params, callback)
       elseif method == "textDocument/definition" then
@@ -50,11 +49,11 @@ local function create_server(dispatchers)
       end
     end,
     notify = function(method, params)
-      log("IC10 LSP - Notification: %s", method)
+      buffer_utils.log("Notification: %s", method)
       if method == "initialized" then
-        log("IC10 LSP - Server Started")
+        buffer_utils.log("Server Started")
       elseif method == "textDocument/didOpen" then
-        log("IC10 LSP - File Opened: %s", params.textDocument.uri)
+        buffer_utils.log("File Opened: %s", params.textDocument.uri)
       elseif method == "exit" then
         closing = true
       end
@@ -64,7 +63,7 @@ local function create_server(dispatchers)
     end,
     terminate = function()
       closing = true
-      log("IC10 LSP - Server terminated.")
+      buffer_utils.log("Server terminated.")
     end,
   }
 end
@@ -80,7 +79,7 @@ M.client_config = {
     vim.keymap.set("n", "gd", vim.lsp.buf.definition, opts)
     vim.api.nvim_create_autocmd("BufDelete", {
       buffer = bufnr,
-      callback = function ()
+      callback = function()
         require("ic10.utils.symbols").clear_cache(bufnr)
       end,
     })
@@ -92,7 +91,7 @@ M.client_config = {
 }
 
 M.setup = function(opts)
-  config = vim.tbl_deep_extend("force", config, opts or {})
+  buffer_utils.config = vim.tbl_deep_extend("force", buffer_utils.config, opts or {})
 end
 
 return M

@@ -1,5 +1,17 @@
 local M = {}
 
+M.config = { debug = false }
+
+-- Conditional Log function
+M.log = function(...)
+  if M.config.debug then
+    local header = "[IC10 LSP]: "
+    local log = string.format(...)
+    vim.notify(header .. log, vim.log.levels.INFO)
+  end
+end
+
+
 --- Obtém a palavra sob o cursor em um buffer IC10, com base nos parâmetros de posição do LSP.
 --- @param params table Parâmetros da requisição LSP contendo `textDocument.uri` e `position`.
 --- @return string A palavra encontrada ou string vazia.
@@ -31,20 +43,54 @@ M.get_word_at_params = function(params)
   return ""
 end
 
---- Scans the actual buffer and returns the line where the label is defined.
----@param bufnr number
----@param label_name string
----@return number|nil line The line (0-indexed) where the label is defined or nil if not found.
-M.find_label_definition = function (bufnr, label_name)
-  local lines = vim.api.nvim_buf_get_lines(bufnr, 0 , -1, false)
-  local pattern = "^%s*"..vim.pesc(label_name).."%s*:"
-  for i, line in ipairs(lines) do
-    if line:match(pattern) then
-      return i - 1
-    end
-  end
+local instruction_pattern = "^%s*([%w]+)%s*(.*)$"
 
-  return nil
+--- Analisa a linha atual e retorna informações de contexto para completion.
+---@param line string Linha completa até a posição do cursor (coluna 0‑indexada).
+---@param cursor_col number Coluna do cursor (0‑indexada).
+---@return table|nil Contexto { instr = string, arg_index = number, args_before = table }
+function M.get_context(line, cursor_col)
+    local text_before_cursor = line:sub(1, cursor_col)
+    local trimmed = text_before_cursor:match("^%s*(.*)$")
+    if not trimmed or trimmed == "" then
+        return nil
+    end
+
+    local instr, args_str = trimmed:match("^([%w_]+)%s*(.*)$")
+    if not instr then
+        return nil
+    end
+
+    local args = {}
+    for arg in args_str:gmatch("%S+") do
+        table.insert(args, arg)
+    end
+
+    -- Determina arg_index
+    local arg_index
+    if args_str == "" then
+        -- Nenhum argumento escrito ainda.
+        -- Se o último caractere antes do cursor for espaço, estamos após "instr " => arg_index = 1 (próximo argumento)
+        -- Senão, cursor está colado em "instr" => arg_index = 0 (completar instrução)
+        if text_before_cursor:match("%s$") then
+            arg_index = 1
+        else
+            arg_index = 0
+        end
+    else
+        local last_char = text_before_cursor:sub(-1)
+        if last_char == " " or last_char == "\t" then
+            arg_index = #args + 1
+        else
+            arg_index = math.max(1, #args)
+        end
+    end
+
+    return {
+        instr = instr,
+        arg_index = arg_index,
+        args_before = args,
+    }
 end
 
 return M
