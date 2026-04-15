@@ -86,6 +86,10 @@ M.client_config = {
   end,
   capabilities = (function()
     local caps = vim.lsp.protocol.make_client_capabilities()
+    local has_blink, blink = pcall(require, "blink.cmp")
+    if has_blink then
+      caps = vim.tbl_deep_extend("force", caps, blink.get_lsp_capabilities())
+    end
     return caps
   end)(),
 }

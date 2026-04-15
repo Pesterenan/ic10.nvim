@@ -275,22 +275,22 @@ M = {
   lb = {
     category = CATEGORIES.BATC,
     description = "Loads logicType from all devices of deviceHash.",
-    signature = "lb [r?] [deviceHash] [logicType] [mode]",
+    signature = "lb [r?] [deviceHash] [logicType] [batchMode]",
   },
   lbn = {
     category = CATEGORIES.BATC,
     description = "Batch load filtered by type and name.",
-    signature = "lbn [r?] [deviceHash] [nameHash] [logicType] [mode]",
+    signature = "lbn [r?] [deviceHash] [nameHash] [logicType] [batchMode]",
   },
   lbns = {
     category = CATEGORIES.BATC,
     description = "Batch load from slot filtered by type and name.",
-    signature = "lbns [r?] [deviceHash] [nameHash] [slot] [logicType] [mode]",
+    signature = "lbns [r?] [deviceHash] [nameHash] [slotIndex] [logicType] [batchMode]",
   },
   lbs = {
     category = CATEGORIES.BATC,
     description = "Batch load from slot filtered by type.",
-    signature = "lbs [r?] [deviceHash] [slot] [logicType] [mode]",
+    signature = "lbs [r?] [deviceHash] [slotIndex] [logicType] [batchMode]",
   },
   sb = {
     category = CATEGORIES.BATC,
@@ -305,7 +305,7 @@ M = {
   sbs = {
     category = CATEGORIES.BATC,
     description = "Batch store to slot on devices of deviceHash.",
-    signature = "sbs [deviceHash] [slot] [logicType] [r?]",
+    signature = "sbs [deviceHash] [slotIndex] [logicType] [r?]",
   },
 
   -- Bitwise

@@ -8,11 +8,11 @@ A dedicated Neovim plugin for Stationeers IC10 (Integrated Circuit) language sup
 -  **Syntax Highlighting**: Simple vim-style syntax highlighting.
 -  **LSP Support**:
   - **Hover**: Documentation for all instructions and in-game Logic Types (e.g., `Pressure`, `RatioOxygen`).
+  - **Autocomplete**: Instructions, Registers (r0-r15, d0-d5), Labels (for branch instructions), and Logic Types/Properties.
+  - **Go to Definition**: Jump to label definitions.
 
 ## Planned
 -  **LSP Support**:
-  - **Autocomplete**: Instructions, Registers (r0-r15, d0-d5), Labels (for branch instructions), and Logic Types/Properties.
-  - **Go to Definition**: Jump to label definitions.
   - **References**: Find usages of labels or variables.
 
 ## Installation

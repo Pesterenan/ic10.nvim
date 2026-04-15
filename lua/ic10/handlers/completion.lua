@@ -5,6 +5,10 @@ local operators = require("ic10.constants.operators")
 
 local M = {}
 
+local registers =
+  { "r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7", "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15", "ra", "sp" }
+local devices = { "db", "d0", "d1", "d2", "d3", "d4", "d5" }
+
 local function signature_to_snippet(signature)
   local i = 1
   return signature:gsub("%[([^%]]+)%]", function(arg)
@@ -14,7 +18,23 @@ local function signature_to_snippet(signature)
   end)
 end
 
---- Gera itens de completion para uma instrução recém-digitada.
+local arg_types_cache = {}
+local function get_arg_types(instr)
+  instr = instr:lower()
+  if arg_types_cache[instr] then return arg_types_cache[instr] end
+  local op = operators[instr]
+  if not op then return {} end
+  local types = {}
+  for arg in op.signature:gmatch("%[([^%]]+)%]") do
+    table.insert(types, arg)
+  end
+  arg_types_cache[instr] = types
+  return types
+end
+
+---Generate a list of instructions and their snippets
+---@param instr string Part of the typed instruction
+---@return table items List with matches and their snippets
 local function get_snippet_items(instr)
   local prefix = instr:lower()
   local items = {}
@@ -29,11 +49,11 @@ local function get_snippet_items(instr)
         documentation = {
           kind = "markdown",
           value = string.format(
-            "**%s** (%s)\n\n%s\n\nExample: `%s`",
+            "**%s** (%s)\n\n%s\n\nSignature: `%s`",
             name,
             op.category or "instruction",
             op.description or "",
-            op.example or ""
+            op.signature or ""
           ),
         },
       })
@@ -42,9 +62,119 @@ local function get_snippet_items(instr)
   return items
 end
 
+---Generate a list of completion for arguments
+---@param instr string Part of the typed argument
+---@param arg_index number Current index of the argument in the signature
+---@param bufnr number Buffer number
+---@return table items List with matches for the argument
+local function get_argument_items(instr, arg_index, bufnr)
+  local arg_types = get_arg_types(instr)
+  local expected = arg_types[arg_index]
+  if not expected then
+    return {}
+  end
+
+  local items = {}
+  local sym = symbols.get_symbols(bufnr)
+
+  -- Labels for 'addr':
+  if expected:find("addr") then
+    for name, data in pairs(sym.labels) do
+      table.insert(items, {
+        label = name,
+        kind = 14,
+        detail = "Label (line " .. (data.line + 1) .. ")",
+        insertText = name,
+        insertTextFormat = 1,
+      })
+    end
+    for _, reg in ipairs(registers) do
+      table.insert(items, {
+        label = reg,
+        kind = 13, -- Enum
+        insertText = reg,
+      })
+    end
+  end
+
+  -- Aliases and Registers for 'r?':
+  if expected:find("r%?") or expected:find("d%?") then
+    -- Adiciona aliases definidos pelo usuário que apontam para registradores
+    for name, data in pairs(sym.aliases) do
+      table.insert(items, {
+        label = name,
+        kind = 12, -- Value
+        detail = "Alias for " .. data.register,
+        insertText = name,
+      })
+    end
+    if expected:find("r") then
+      for _, reg in ipairs(registers) do
+        table.insert(items, {
+          label = reg,
+          kind = 13, -- Enum
+          insertText = reg,
+        })
+      end
+    end
+    if expected:find("d") then
+      for _, dev in ipairs(devices) do
+        table.insert(items, {
+          label = dev,
+          kind = 13, -- Enum
+          insertText = dev,
+        })
+      end
+    end
+  end
+
+  -- Constants: (LogicTypes, LogicSlotTypes, Batch Modes, Reagent Modes):
+  if
+    expected:find("logicType")
+    or expected:find("logicSlotType")
+    or expected:find("batchMode")
+    or expected:find("reagentMode")
+  then
+    local source_table = expected:find("Slot") and constants.types.logic_slot_types
+      or expected:find("batch") and constants.types.batch_modes
+      or expected:find("reagent") and constants.types.reagent_modes
+      or constants.types.logic_types
+    if source_table then
+      for name, data in pairs(source_table) do
+        table.insert(items, {
+          label = name,
+          kind = 25, -- Type
+          detail = string.format(
+            "%s\n\n%s",
+            data.description or "",
+            (data.value ~= nil and "Value: " .. data.value) or ""
+          ),
+          insertText = name,
+          insertTextFormat = 1,
+        })
+      end
+    end
+  end
+
+  -- Hash arguments, user defined or HASH(...) snippet
+  if expected:find("Hash") then
+    table.insert(items, {
+      label = 'HASH("")',
+      kind = 15, -- Snippet
+      insertText = 'HASH("${1:string}")',
+      insertTextFormat = 2,
+      documentation = {
+        kind = "markdown",
+        value = "Insert a HASH string literal",
+      },
+    })
+  end
+
+  return items
+end
+
 M.on_completion = function(params, callback)
   vim.schedule(function()
-    buffer_utils.log("Completion request: %s", vim.inspect(params))
     local bufnr = vim.uri_to_bufnr(params.textDocument.uri)
     local pos = params.position
     local line = vim.api.nvim_buf_get_lines(bufnr, pos.line, pos.line + 1, false)[1] or ""
@@ -57,18 +187,12 @@ M.on_completion = function(params, callback)
 
     local items = {}
 
-    buffer_utils.log("Instr: %s", ctx.instr)
     if ctx.arg_index == 0 then
-      -- Cursor logo após o mnemônico, sugerir snippet da instrução
       items = get_snippet_items(ctx.instr)
+    else
+      items = get_argument_items(ctx.instr, ctx.arg_index, bufnr)
     end
-
-    -- Se não houver itens específicos, podemos sugerir palavras do buffer como fallback
-    if #items == 0 then
-      -- Fallback: sugestão de palavras já presentes no buffer (opcional)
-    end
-
-    buffer_utils.log("Returning %d items", #items)
+    buffer_utils.log("Items: %d", #items)
     callback(nil, { isIncomplete = false, items = items })
   end)
 end
