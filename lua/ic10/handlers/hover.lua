@@ -1,7 +1,8 @@
-local M = {}
-
-local symbols = require("ic10.utils.symbols")
+local buffer_utils = require("ic10.utils.buffer")
 local constants = require("ic10.constants")
+local symbols_utils = require("ic10.utils.symbols")
+
+local M = {}
 
 local function format_constant_hover(word, data)
   local lines = {
@@ -40,17 +41,17 @@ local function format_user_defined(word, data)
 end
 
 M.on_hover = function(params, callback)
-  local word = require("ic10.utils.buffer").get_word_at_params(params)
+  local word = buffer_utils.get_word_at_params(params)
   if word == "" then
     return callback(nil, nil)
   end
 
   local bufnr = vim.uri_to_bufnr(params.textDocument.uri)
-  local sym = symbols.get_symbols(bufnr)
+  local symbols = symbols_utils.get_symbols(bufnr)
   local user_symbols = {
-    { table = sym.defines, type = "define" },
-    { table = sym.aliases,  type = "alias"  },
-    { table = sym.labels,   type = "label"  },
+    { table = symbols.aliases,  type = "alias"  },
+    { table = symbols.defines, type = "define" },
+    { table = symbols.labels,   type = "label"  },
   }
 
   for _, entry in ipairs(user_symbols) do
@@ -61,16 +62,13 @@ M.on_hover = function(params, callback)
     end
   end
 
-  local operators = constants.operators
-  local types = constants.types
-
   local sources = {
-    operators,
-    types.logic_types,
-    types.logic_slot_types,
-    types.system,
-    types.batch_modes,
-    types.reagent_modes,
+    constants.operators,
+    constants.types.logic_types,
+    constants.types.logic_slot_types,
+    constants.types.system,
+    constants.types.batch_modes,
+    constants.types.reagent_modes,
   }
 
   for _, source in ipairs(sources) do

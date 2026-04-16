@@ -1,15 +1,17 @@
-local constants = require("ic10.constants")
-local symbols = require("ic10.utils.symbols")
 local buffer_utils = require("ic10.utils.buffer")
-local operators = require("ic10.constants.operators")
+local constants = require("ic10.constants")
+local symbols_utils = require("ic10.utils.symbols")
+
+local REGISTERS =
+  { "r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7", "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15", "ra", "sp" }
+local DEVICES = { "db", "d0", "d1", "d2", "d3", "d4", "d5" }
 
 local M = {}
 
-local registers =
-  { "r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7", "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15", "ra", "sp" }
-local devices = { "db", "d0", "d1", "d2", "d3", "d4", "d5" }
-
-local function signature_to_snippet(signature)
+---Format an instruction signature argument list to a snippet list
+---Example: `sum [r?] [a] [b]` -> `sum {1:r?} {2:a} {3:b}`
+---@param signature string The instruction's signature
+local function format_signature_to_snippet(signature)
   local i = 1
   return signature:gsub("%[([^%]]+)%]", function(arg)
     local placeholder = string.format("${%d:%s}", i, arg)
@@ -21,11 +23,15 @@ end
 local arg_types_cache = {}
 local function get_arg_types(instr)
   instr = instr:lower()
-  if arg_types_cache[instr] then return arg_types_cache[instr] end
-  local op = operators[instr]
-  if not op then return {} end
+  if arg_types_cache[instr] then
+    return arg_types_cache[instr]
+  end
+  local instruction = constants.operators[instr]
+  if not instruction then
+    return {}
+  end
   local types = {}
-  for arg in op.signature:gmatch("%[([^%]]+)%]") do
+  for arg in instruction.signature:gmatch("%[([^%]]+)%]") do
     table.insert(types, arg)
   end
   arg_types_cache[instr] = types
@@ -38,9 +44,9 @@ end
 local function get_snippet_items(instr)
   local prefix = instr:lower()
   local items = {}
-  for name, op in pairs(operators) do
+  for name, op in pairs(constants.operators) do
     if name:sub(1, #prefix) == prefix then
-      local snippet_text = signature_to_snippet(op.signature)
+      local snippet_text = format_signature_to_snippet(op.signature)
       table.insert(items, {
         label = name .. " ...",
         kind = 15, -- Snippet
@@ -75,11 +81,11 @@ local function get_argument_items(instr, arg_index, bufnr)
   end
 
   local items = {}
-  local sym = symbols.get_symbols(bufnr)
+  local symbols = symbols_utils.get_symbols(bufnr)
 
   -- Labels for 'addr':
   if expected:find("addr") then
-    for name, data in pairs(sym.labels) do
+    for name, data in pairs(symbols.labels) do
       table.insert(items, {
         label = name,
         kind = 14,
@@ -88,7 +94,7 @@ local function get_argument_items(instr, arg_index, bufnr)
         insertTextFormat = 1,
       })
     end
-    for _, reg in ipairs(registers) do
+    for _, reg in ipairs(REGISTERS) do
       table.insert(items, {
         label = reg,
         kind = 13, -- Enum
@@ -99,8 +105,8 @@ local function get_argument_items(instr, arg_index, bufnr)
 
   -- Aliases and Registers for 'r?':
   if expected:find("r%?") or expected:find("d%?") then
-    -- Adiciona aliases definidos pelo usuário que apontam para registradores
-    for name, data in pairs(sym.aliases) do
+    -- Adds aliases defined by the user which points to a register
+    for name, data in pairs(symbols.aliases) do
       table.insert(items, {
         label = name,
         kind = 12, -- Value
@@ -109,7 +115,7 @@ local function get_argument_items(instr, arg_index, bufnr)
       })
     end
     if expected:find("r") then
-      for _, reg in ipairs(registers) do
+      for _, reg in ipairs(REGISTERS) do
         table.insert(items, {
           label = reg,
           kind = 13, -- Enum
@@ -118,7 +124,7 @@ local function get_argument_items(instr, arg_index, bufnr)
       end
     end
     if expected:find("d") then
-      for _, dev in ipairs(devices) do
+      for _, dev in ipairs(DEVICES) do
         table.insert(items, {
           label = dev,
           kind = 13, -- Enum
@@ -158,6 +164,15 @@ local function get_argument_items(instr, arg_index, bufnr)
 
   -- Hash arguments, user defined or HASH(...) snippet
   if expected:find("Hash") then
+    -- Adds constants defined by the user
+    for name, data in pairs(symbols.defines) do
+      table.insert(items, {
+        label = name,
+        kind = 12, -- Value
+        detail = "Value: " .. data.value,
+        insertText = name,
+      })
+    end
     table.insert(items, {
       label = 'HASH("")',
       kind = 15, -- Snippet
@@ -176,11 +191,9 @@ end
 M.on_completion = function(params, callback)
   vim.schedule(function()
     local bufnr = vim.uri_to_bufnr(params.textDocument.uri)
-    local pos = params.position
-    local line = vim.api.nvim_buf_get_lines(bufnr, pos.line, pos.line + 1, false)[1] or ""
-    local cursor_col = pos.character
+    local line = vim.api.nvim_buf_get_lines(bufnr, params.position.line, params.position.line + 1, false)[1]
 
-    local ctx = buffer_utils.get_context(line, cursor_col)
+    local ctx = buffer_utils.get_context(line, params.position.character)
     if not ctx then
       return callback(nil, { isIncomplete = false, items = {} })
     end
