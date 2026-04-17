@@ -2,18 +2,18 @@ local LSP_NAME = "ic10-lsp"
 local LSP_VERSION = "0.1.0"
 
 local buffer_utils = require("ic10.utils.buffer")
-local completion = require("ic10.handlers.completion")
-local definition = require("ic10.handlers.definition")
-local hover = require("ic10.handlers.hover")
+local completion_handler = require("ic10.handlers.completion")
+local definition_handler = require("ic10.handlers.definition")
+local hover_handler = require("ic10.handlers.hover")
+local rename_handler = require("ic10.handlers.rename")
 
 local M = {}
 
 ---@param dispatchers table
 local function create_server(dispatchers)
-  local closing = false
+  local is_server_closing = false
   return {
     request = function(method, params, callback)
-      -- buffer_utils.log("Request: %s", method)
       if method == "initialize" then
         local result = {
           capabilities = {
@@ -23,6 +23,7 @@ local function create_server(dispatchers)
             },
             definitionProvider = true,
             hoverProvider = true,
+            renameProvider = true,
             textDocumentSync = 1,
           },
           serverInfo = {
@@ -32,38 +33,42 @@ local function create_server(dispatchers)
         }
         callback(nil, result)
       elseif method == "textDocument/completion" then
-        completion.on_completion(params, callback)
+        completion_handler.on_completion(params, callback)
       elseif method == "textDocument/hover" then
-        hover.on_hover(params, callback)
+        hover_handler.on_hover(params, callback)
       elseif method == "textDocument/definition" then
-        definition.on_definition(params, callback)
+        definition_handler.on_definition(params, callback)
+      elseif method == "textDocument/prepareRename" then
+        rename_handler.prepare_rename(params, callback)
+      elseif method == "textDocument/rename" then
+        rename_handler.rename(params, callback)
       elseif method == "textDocument/didChange" then
         local bufnr = vim.uri_to_bufnr(params.textDocument.uri)
-        require("ic10.utils.symbols").clear_cache(bufnr)
+        require("ic10.utils.symbols").invalidate_cache(bufnr)
         callback(nil, nil)
       elseif method == "shutdown" then
         callback(nil, nil)
-        closing = true
+        is_server_closing = true
       else
         callback(nil, {})
       end
     end,
     notify = function(method, params)
-      buffer_utils.log("Notification: %s", method)
+      buffer_utils.log("notification: %s", method)
       if method == "initialized" then
-        buffer_utils.log("Server Started")
+        buffer_utils.log("server started")
       elseif method == "textDocument/didOpen" then
-        buffer_utils.log("File Opened: %s", params.textDocument.uri)
+        buffer_utils.log("file opened: %s", params.textdocument.uri)
       elseif method == "exit" then
-        closing = true
+        is_server_closing = true
       end
     end,
     is_closing = function()
-      return closing
+      return is_server_closing
     end,
     terminate = function()
-      closing = true
-      buffer_utils.log("Server terminated.")
+      is_server_closing = true
+      buffer_utils.log("server terminated.")
     end,
   }
 end

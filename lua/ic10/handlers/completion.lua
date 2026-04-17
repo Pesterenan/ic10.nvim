@@ -201,7 +201,6 @@ M.on_completion = function(params, callback)
     else
       items = get_argument_items(ctx.instr, ctx.arg_index, bufnr)
     end
-    buffer_utils.log("Items: %d", #items)
     callback(nil, { isIncomplete = false, items = items })
   end)
 end
