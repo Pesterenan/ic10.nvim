@@ -58,7 +58,7 @@ local function create_server(dispatchers)
       if method == "initialized" then
         buffer_utils.log("server started")
       elseif method == "textDocument/didOpen" then
-        buffer_utils.log("file opened: %s", params.textdocument.uri)
+        buffer_utils.log("file opened: %s", params.textDocument.uri)
       elseif method == "exit" then
         is_server_closing = true
       end
