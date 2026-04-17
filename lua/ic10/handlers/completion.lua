@@ -2,10 +2,6 @@ local buffer_utils = require("ic10.utils.buffer")
 local constants = require("ic10.constants")
 local symbols_utils = require("ic10.utils.symbols")
 
-local REGISTERS =
-  { "r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7", "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15", "ra", "sp" }
-local DEVICES = { "db", "d0", "d1", "d2", "d3", "d4", "d5" }
-
 local M = {}
 
 ---Format an instruction signature argument list to a snippet list
@@ -94,7 +90,7 @@ local function get_argument_items(instr, arg_index, bufnr)
         insertTextFormat = 1,
       })
     end
-    for _, reg in ipairs(REGISTERS) do
+    for _, reg in ipairs(constants.REGISTERS) do
       table.insert(items, {
         label = reg,
         kind = 13, -- Enum
@@ -115,7 +111,7 @@ local function get_argument_items(instr, arg_index, bufnr)
       })
     end
     if expected:find("r") then
-      for _, reg in ipairs(REGISTERS) do
+      for _, reg in ipairs(constants.REGISTERS) do
         table.insert(items, {
           label = reg,
           kind = 13, -- Enum
@@ -124,7 +120,7 @@ local function get_argument_items(instr, arg_index, bufnr)
       end
     end
     if expected:find("d") then
-      for _, dev in ipairs(DEVICES) do
+      for _, dev in ipairs(constants.DEVICES) do
         table.insert(items, {
           label = dev,
           kind = 13, -- Enum
